@@ -1,9 +1,6 @@
-simple-amqplib
-[![Build Status](https://secure.travis-ci.org/noblesamurai/node-simple-amqplib.svg?branch=master)](http://travis-ci.org/noblesamurai/node-simple-amqplib)
-[![npm version](https://badge.fury.io/js/simple-amqplib.svg)](https://badge.fury.io/js/simple-amqplib)
-----------------
+ICQueue
 
-> Simple consuming and publishing from/to a RabbitMQ broker.
+> Simple consuming and publishing from/to RabbitMQ.
 
 Declarative API to consume from a rabbitMQ queue and to perform publish operations.
 
@@ -14,7 +11,7 @@ Declarative API to consume from a rabbitMQ queue and to perform publish operatio
 
 # Example usage
 ```javascript
-const AMQP = require('simple-amqplib');
+const ICQueue = require('icqueue');
 
 var config = {
   url: process.env.AMQP_URL,
@@ -30,11 +27,11 @@ var config = {
   prefetch: 100
 };
 
-const amqp = new AMQP(config);
+const icq = new ICQueue(config);
 
 async function main () {
   // Must call this before you consume/publish/etc...
-  await amqp.connect();
+  await icq.connect();
 
   // Consuming
   var handleMessage = function(message, callback) {
@@ -49,16 +46,18 @@ async function main () {
   // If an exception occurs in handleMessage, then the message is `nack`ed and not requeued.
 
   // Start consuming:
-  amqp.consume(handleMessage);
+  icq.consume(handleMessage);
 
   // Publishing to arbitrary routing key.
-  await amqp.publish(routingKey, payload, options);
+  await icq.publish(routingKey, payload, options);
 }
 ```
 
 If `payload` is an object, it will be turned into JSON.
 
 # Details
+
+<b>This is a wrapper to https://github.com/squaremo/amqp.node (`amqplib`).</b>
 
 - You can specify a queue which will be declared (made to exist). This will be
   the queue from which you will consume.
@@ -77,11 +76,6 @@ If `payload` is an object, it will be turned into JSON.
   lettered on that queue it will have somewhere to go without you having to set up
   a dead lettering queue manually.
 
-
-
-# Thanks to
-This is a wrapper to https://github.com/squaremo/amqp.node (`amqplib`).
-
 # Tests
 Start a rabbit server, preferably a 'throw away' one with fresh state.  You can
 do this like so if you have docker:
@@ -99,24 +93,24 @@ use localhost if it's not there... unproven though.)
 
 # API
 
-<a name="AMQPWrapper"></a>
+<a name="ICQueue"></a>
 
-## AMQPWrapper
+## ICQueue
 Class to contain an instantiated connection/channel to AMQP with a given
 config.
 
 **Kind**: global class
 
-* [AMQPWrapper](#AMQPWrapper)
-    * [new AMQPWrapper(config)](#new_AMQPWrapper_new)
-    * [.connect()](#AMQPWrapper+connect) ⇒ <code>Promise</code>
-    * [.close()](#AMQPWrapper+close) ⇒ <code>Promise</code>
-    * [.publish(routingKey, message, options)](#AMQPWrapper+publish) ⇒ <code>Promise</code>
-    * [.consume(handleMessage, options)](#AMQPWrapper+consume) ⇒ <code>Promise</code>
+* [ICQueue](#ICQueue)
+    * [new ICQueue(config)](#new_ICQueue_new)
+    * [.connect()](#ICQueue+connect) ⇒ <code>Promise</code>
+    * [.close()](#ICQueue+close) ⇒ <code>Promise</code>
+    * [.publish(routingKey, message, options)](#ICQueue+publish) ⇒ <code>Promise</code>
+    * [.consume(handleMessage, options)](#ICQueue+consume) ⇒ <code>Promise</code>
 
-<a name="new_AMQPWrapper_new"></a>
+<a name="new_ICQueue_new"></a>
 
-### new AMQPWrapper(config)
+### new ICQueue(config)
 Instantiate an AMQP wrapper with a given config.
 
 
@@ -130,25 +124,25 @@ Instantiate an AMQP wrapper with a given config.
 | config.queue.routingKey | <code>Array.&lt;string&gt;</code> \| <code>string</code> | 
 | config.queue.options | <code>object</code> | 
 
-<a name="AMQPWrapper+connect"></a>
+<a name="ICQueue+connect"></a>
 
-### amqpWrapper.connect() ⇒ <code>Promise</code>
+### icqueue.connect() ⇒ <code>Promise</code>
 Connects, establishes a channel, sets up exchange/queues/bindings/dead
 lettering.
 
-**Kind**: instance method of [<code>AMQPWrapper</code>](#AMQPWrapper)
-<a name="AMQPWrapper+close"></a>
+**Kind**: instance method of [<code>ICQueue</code>](#ICQueue)
+<a name="ICQueue+close"></a>
 
-### amqpWrapper.close() ⇒ <code>Promise</code>
+### icqueue.close() ⇒ <code>Promise</code>
 Closes connection.
 
-**Kind**: instance method of [<code>AMQPWrapper</code>](#AMQPWrapper)
-<a name="AMQPWrapper+publish"></a>
+**Kind**: instance method of [<code>ICQueue</code>](#ICQueue)
+<a name="ICQueue+publish"></a>
 
-### amqpWrapper.publish(routingKey, message, options) ⇒ <code>Promise</code>
+### icqueue.publish(routingKey, message, options) ⇒ <code>Promise</code>
 Publish a message to the given routing key, with given options.
 
-**Kind**: instance method of [<code>AMQPWrapper</code>](#AMQPWrapper)
+**Kind**: instance method of [<code>ICQueue</code>](#ICQueue)
 
 | Param | Type |
 | --- | --- |
@@ -156,9 +150,9 @@ Publish a message to the given routing key, with given options.
 | message | <code>object</code> \| <code>string</code> |
 | options | <code>object</code> |
 
-<a name="AMQPWrapper+consume"></a>
+<a name="ICQueue+consume"></a>
 
-### amqpWrapper.consume(handleMessage, options) ⇒ <code>Promise</code>
+### icqueue.consume(handleMessage, options) ⇒ <code>Promise</code>
 handleMessage() is expected to be of the form:
 handleMessage(parsedMessage, callback).
 If callback is called with a non-null error, then the message will be
@@ -171,34 +165,9 @@ If not given, requeue is assumed to be false.
 
 cf http://squaremo.github.io/amqp.node/doc/channel_api.html#toc_34
 
-**Kind**: instance method of [<code>AMQPWrapper</code>](#AMQPWrapper)
+**Kind**: instance method of [<code>ICQueue</code>](#ICQueue)
 
 | Param | Type |
 | --- | --- |
 | handleMessage | <code>function</code> |
 | options | <code>object</code> |
-
-# License
-
-(The MIT License)
-
-Copyright (c) 2014 Noble Samurai
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

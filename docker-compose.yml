@@ -8,7 +8,7 @@ test:
     - DEBUG=${DEBUG}
   volumes:
     - ./test:/code/test
-    - ./amqp.js:/code/amqp.js
+    - ./icqueue.js:/code/icqueue.js
 
 rabbitmq:
   image: rabbitmq

@@ -1,19 +1,19 @@
 {
-  "name": "simple-amqplib",
+  "name": "ICQueue",
   "version": "7.0.4-1",
   "engines": {
     "node": ">= 8"
   },
   "description": "Dead simple consume & publish for RabbitMQ.",
-  "main": "amqp.js",
+  "main": "icqueue.js",
   "scripts": {
     "coverage": "nyc -a -c -r html -r text -r lcov npm test",
-    "docs": "jsdoc2md amqp.js",
-    "test": "semistandard && NODE_ENV=test mocha test --recursive --exit"
+    "docs": "jsdoc2md icqueue.js",
+    "test": "semistandard &&set NODE_ENV=test&& mocha test --timeout 10000 --recursive --exit"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/noblesamurai/node-simple-amqplib"
+    "url": "http://github/pear/ICQueue"
   },
   "keywords": [
     "AMQP",
@@ -21,15 +21,12 @@
     "RabbitMQ",
     "amqplib",
     "consume",
-    "publish"
+    "publish",
+    "icq",
+    "icqueue"
   ],
-  "author": "Timothy Leslie Allen <allen.timothy.email@gmail.com> (https://github.com/timlesallen)",
-  "license": "BSD",
-  "bugs": {
-    "url": "https://github.com/noblesamurai/node-simple-amqplib/issues"
-  },
   "dependencies": {
-    "amqplib": "^0.5.5",
+    "amqplib": "^0.5.6",
     "debug": "^2.6.8",
     "json-stringify-safe": "^5.0.0"
   },

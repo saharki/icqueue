@@ -7,7 +7,7 @@ const { promisify } = require('util');
  * Class to contain an instantiated connection/channel to AMQP with a given
  * config.
  */
-class AMQPWrapper {
+class ICQueue {
   /**
    * Instantiate an AMQP wrapper with a given config.
    * @param {object} config
@@ -20,7 +20,7 @@ class AMQPWrapper {
    */
   constructor (config) {
     if (!config || !config.url || !config.exchange) {
-      throw new Error('simple-amqplib: Invalid config');
+      throw new Error('ICQueue: Invalid config');
     }
     this.config = config;
     this.connection = null;
@@ -138,4 +138,4 @@ class AMQPWrapper {
   }
 }
 
-module.exports = AMQPWrapper;
+module.exports = ICQueue;

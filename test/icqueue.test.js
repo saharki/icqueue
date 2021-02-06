@@ -1,66 +1,75 @@
 const SandboxedModule = require('sandboxed-module');
-const expect = require('chai').expect;
+const { expect } = require('chai');
 require('chai').use(require('chai-as-promised'));
 require('chai').use(require('dirty-chai'));
-const AMQP = require('../amqp');
-const config = require('./config');
+require('chai').use(require('sinon-chai'));
 
-describe('AMQP', function () {
+const config = require('./config');
+const ICQueue = require('../icqueue');
+
+describe('ICQueue', function () {
   describe('#constructor', function () {
     it('should throw with empty constructor', function () {
-      expect(() => new AMQP()).to.throw('simple-amqplib: Invalid config');
+      expect(() => new ICQueue()).to.throw('ICQueue: Invalid config');
     });
+
     it('should throw with no url or exchange', function () {
-      expect(() => new AMQP({})).to.throw('simple-amqplib: Invalid config');
+      expect(() => new ICQueue({})).to.throw('ICQueue: Invalid config');
     });
+
     it('should throw with no url', function () {
-      expect(() => new AMQP({ exchange: '' })).to.throw('simple-amqplib: Invalid config');
+      expect(() => new ICQueue({ exchange: '' })).to.throw('ICQueue: Invalid config');
     });
+
     it('should throw with no exchange', function () {
-      expect(() => new AMQP({ url: '' })).to.throw('simple-amqplib: Invalid config');
+      expect(() => new ICQueue({ url: '' })).to.throw('ICQueue: Invalid config');
     });
   });
+
   describe('#connect', function () {
     it('should should fail to connect to bad endpoint', function (done) {
-      const amqp = new AMQP({
+      const icq = new ICQueue({
         url: 'amqp://guest:guest@localhost:6767',
         exchange: 'FOO'
       });
-      amqp.connect().catch(function (err) {
+      icq.connect().catch(function (err) {
         expect(err.code).to.equal('ECONNREFUSED');
         done();
       });
     });
+
     it('should return a promise', async function () {
-      const amqp = new AMQP(config.good);
-      expect(amqp.connect()).to.be.fulfilled();
+      const icq = new ICQueue(config.good);
+      expect(icq.connect()).to.be.fulfilled();
     });
+
     it('should declare your queue, and bind it', async function () {
       const amqpLibMock = require('./amqplibmock')();
-      const MockedAMQP = SandboxedModule.require('../amqp', {
+      const MockedICQueue = SandboxedModule.require('../icqueue', {
         requires: {
           amqplib: amqpLibMock.mock
         }
       });
-      const mockedAMQP = new MockedAMQP(config.good);
+      const mockedICQueue = new MockedICQueue(config.good);
 
-      await mockedAMQP.connect();
+      await mockedICQueue.connect();
       // one queue, dead lettered
       expect(amqpLibMock.assertQueueSpy.callCount).to.equal(2);
       // Bind the consume queue, and its dead letter queue.
       expect(amqpLibMock.bindQueueSpy).to.have.been.calledWith(config.good.queue.name, config.good.exchange, config.good.queue.routingKey);
       expect(amqpLibMock.bindQueueSpy.callCount).to.equal(2);
     });
+
     it('allows you to specify an array for routingKey and binds each given', function (done) {
       const amqpLibMock = require('./amqplibmock')();
-      const MockedAMQP = SandboxedModule.require('../amqp', {
+      const MockedICQueue = SandboxedModule.require('../icqueue', {
         requires: {
           amqplib: amqpLibMock.mock
         }
       });
-      const mockedAMQP = new MockedAMQP(config.routingKeyArray);
+      const mockedICQueue = new MockedICQueue(config.routingKeyArray);
 
-      mockedAMQP.connect().then(function () {
+      mockedICQueue.connect().then(function () {
         // one queue, dead lettered
         expect(amqpLibMock.assertQueueSpy.callCount).to.equal(2);
         // Bind the consume queue with its two routing keys, and its dead
@@ -69,16 +78,17 @@ describe('AMQP', function () {
         done();
       }).catch(done);
     });
+
     it('should just declare if you don\'t specify routing key', function (done) {
       const amqpLibMock = require('./amqplibmock')();
-      const MockedAMQP = SandboxedModule.require('../amqp', {
+      const MockedICQueue = SandboxedModule.require('../icqueue', {
         requires: {
           amqplib: amqpLibMock.mock
         }
       });
-      const mockedAMQP = new MockedAMQP(config.noRoutingKey);
+      const mockedICQueue = new MockedICQueue(config.noRoutingKey);
 
-      mockedAMQP.connect().then(function () {
+      mockedICQueue.connect().then(function () {
         // one queue, not dead lettered
         expect(amqpLibMock.assertQueueSpy.callCount).to.equal(1);
         // No binding.
@@ -87,18 +97,21 @@ describe('AMQP', function () {
       }).catch(done);
     });
   });
+
   describe('#publish', function () {
     it('should resolve successfully', async function () {
-      const amqp = new AMQP(config.good);
-      await amqp.connect();
-      await expect(amqp.publish('myqueue', 'test', {})).to.eventually.be.fulfilled();
+      const icq = new ICQueue(config.good);
+      await icq.connect();
+      await expect(icq.publish('myqueue', 'test', {})).to.eventually.be.fulfilled();
     });
+
     it('should accept objects', async function () {
-      const amqp = new AMQP(config.good);
-      await amqp.connect();
-      await expect(amqp.publish('myqueue', { woo: 'test' }, {})).to.eventually.be.fulfilled();
+      const icq = new ICQueue(config.good);
+      await icq.connect();
+      await expect(icq.publish('myqueue', { woo: 'test' }, {})).to.eventually.be.fulfilled();
     });
   });
+
   describe('#consume', async function () {
     it('if done(err) is called with err === null, calls ack().', function (done) {
       const ack = function () {
@@ -106,19 +119,19 @@ describe('AMQP', function () {
       };
 
       const amqpLibMock = require('./amqplibmock')({ overrides: { ack: ack } });
-      const MockedAMQP = SandboxedModule.require('../amqp', {
+      const MockedICQueue = SandboxedModule.require('../icqueue', {
         requires: {
           amqplib: amqpLibMock.mock
         }
       });
-      const mockedAMQP = new MockedAMQP(config.good);
+      const mockedICQueue = new MockedICQueue(config.good);
 
       function myMessageHandler (parsedMsg, cb) {
         cb();
       }
 
-      mockedAMQP.connect().then(function () {
-        mockedAMQP.consume(myMessageHandler);
+      mockedICQueue.connect().then(function () {
+        mockedICQueue.consume(myMessageHandler);
       }).catch((done));
     });
 
@@ -133,21 +146,22 @@ describe('AMQP', function () {
         overrides: { nack: nack }
       });
 
-      const MockedAMQP = SandboxedModule.require('../amqp', {
+      const MockedICQueue = SandboxedModule.require('../icqueue', {
         requires: {
           amqplib: amqpLibMock.mock
         }
       });
-      const mockedAMQP = new MockedAMQP(config.good);
+      const mockedICQueue = new MockedICQueue(config.good);
 
       function myMessageHandler (parsedMsg, cb) {
         cb();
       }
 
-      mockedAMQP.connect().then(function () {
-        mockedAMQP.consume(myMessageHandler);
+      mockedICQueue.connect().then(function () {
+        mockedICQueue.consume(myMessageHandler);
       }).catch(done);
     });
+
     it('if json callback called with err, calls nack() with requeue as given.',
       function (done) {
         const nack = function (message, upTo, requeue) {
@@ -157,33 +171,35 @@ describe('AMQP', function () {
 
         const amqpLibMock = require('./amqplibmock')({ overrides: { nack: nack } });
 
-        const MockedAMQP = SandboxedModule.require('../amqp', {
+        const MockedICQueue = SandboxedModule.require('../icqueue', {
           requires: {
             amqplib: amqpLibMock.mock
           }
         });
-        const mockedAMQP = new MockedAMQP(config.good);
+        const mockedICQueue = new MockedICQueue(config.good);
 
         function myMessageHandler (parsedMsg, cb) {
           cb(new Error('got it bad'), 'requeue');
         }
 
-        mockedAMQP.connect().then(function () {
-          mockedAMQP.consume(myMessageHandler);
+        mockedICQueue.connect().then(function () {
+          mockedICQueue.consume(myMessageHandler);
         }).catch(done);
       });
   });
+
   describe('#close', function () {
     it('should close the connection', async function () {
       const amqpLibMock = require('./amqplibmock')();
-      const MockedAMQP = SandboxedModule.require('../amqp', {
+      const MockedICQueue = SandboxedModule.require('../icqueue', {
         requires: {
           amqplib: amqpLibMock.mock
         }
       });
-      const amqp = new MockedAMQP(config.good);
-      await amqp.connect();
-      await amqp.close();
+
+      const icq = new MockedICQueue(config.good);
+      await icq.connect();
+      await icq.close();
       expect(amqpLibMock.closeConnectionSpy).to.have.been.called();
     });
   });
